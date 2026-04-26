@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Eneo — Find Your Next Home</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,700;1,900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- ══════════════════ LOGIN ══════════════════ -->
+  <div id="login-screen" class="screen active">
+    <div class="login-left">
+      <div>
+        <div class="l-wordmark"><em>eneo</em></div>
+        <div class="l-tagline">Your next home is already waiting.<br>No fees. No chat APIs. Just homes.</div>
+      </div>
+      <div class="l-features">
+        <div class="l-feat">
+          <div class="l-feat-icon">📍</div>
+          <div class="l-feat-text">
+            <strong>GPS-precise listings</strong>
+            <span>Properties pinned exactly where they are</span>
+          </div>
+        </div>
+        <div class="l-feat">
+          <div class="l-feat-icon">📞</div>
+          <div class="l-feat-text">
+            <strong>Direct contact, always</strong>
+            <span>One call to the landlord, no middlemen</span>
+          </div>
+        </div>
+        <div class="l-feat">
+          <div class="l-feat-icon">🔄</div>
+          <div class="l-feat-text">
+            <strong>Rent & post with one account</strong>
+            <span>No separate landlord or tenant roles</span>
+          </div>
+        </div>
+      </div>
+      <div class="l-preview">
+        <div class="l-pcard">
+          <img src="https://images.unsplash.com/photo-1598928506311-c55ded91a20c?w=300&q=75" alt="">
+          <div class="l-pcard-body">
+            <div class="l-pcard-price">KSh 45,000</div>
+            <div class="l-pcard-loc">📍 Kilimani</div>
+          </div>
+        </div>
+        <div class="l-pcard">
+          <img src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=300&q=75" alt="">
+          <div class="l-pcard-body">
+            <div class="l-pcard-price">KSh 85,000</div>
+            <div class="l-pcard-loc">📍 Karen</div>
+          </div>
+        </div>
+        <div class="l-pcard">
+          <img src="https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=300&q=75" alt="">
+          <div class="l-pcard-body">
+            <div class="l-pcard-price">KSh 35,000</div>
+            <div class="l-pcard-loc">📍 Westlands</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="login-right">
+      <div class="login-form-box">
+        <div class="auth-tabs">
+          <button class="auth-tab active" onclick="authSwitch('in',this)">Sign In</button>
+          <button class="auth-tab" onclick="authSwitch('up',this)">Create Account</button>
+        </div>
+
+        <div id="form-in">
+          <div class="auth-heading">Welcome back.</div>
+          <div class="auth-sub">Sign in to your Eneo account to continue.</div>
+          <div class="field"><label>Email</label><input type="email" placeholder="jane@example.com"></div>
+          <div class="field"><label>Password</label><input type="password" placeholder="••••••••"></div>
+          <button class="login-cta" onclick="doLogin(this)">Sign In →</button>
+          <p style="text-align:center;font-size:13px;color:var(--text3);margin-top:14px;">Forgot password? <a style="color:var(--forest);font-weight:600;cursor:pointer;">Reset it →</a></p>
+        </div>
+
+        <div id="form-up" style="display:none">
+          <div class="auth-heading">Join Eneo.</div>
+          <div class="auth-sub">Rent or list — one account does both, always free.</div>
+          <div class="field"><label>Full Name</label><input type="text" placeholder="Jane Mwangi"></div>
+          <div class="field"><label>Email</label><input type="email" placeholder="jane@example.com"></div>
+          <div class="field"><label>Phone</label><input type="tel" placeholder="+254 7XX XXX XXX"></div>
+          <div class="field"><label>Password</label><input type="password" placeholder="Create a strong password"></div>
+          <button class="login-cta" onclick="doLogin(this)">Create Account →</button>
+        </div>
+
+        <div class="or-row"><span>or</span></div>
+        <button class="google-btn">🌐 &nbsp;Continue with Google</button>
+        <div class="auth-footer">No listing fees · No chat APIs · No hidden costs<br>Just homes, honestly.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ APP ══════════════════ -->
+  <div id="app-screen" class="screen">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sb-logo">
+        <div class="sb-wordmark">eneo</div>
+        <div class="sb-tagline">House hunting, simplified.</div>
+      </div>
+      <nav class="sb-nav">
+        <button class="snav-btn active" id="snav-feed" onclick="switchNav('feed')">
+          <span class="sni">🏠</span>
+          <span class="snav-label">Explore</span>
+        </button>
+        <button class="snav-btn" id="snav-posting" onclick="switchNav('posting')">
+          <span class="sni">📝</span>
+          <span class="snav-label">My Listings</span>
+          <div class="snav-dot"></div>
+        </button>
+        <button class="snav-btn" id="snav-saved" onclick="switchNav('saved')">
+          <span class="sni">🔖</span>
+          <span class="snav-label">Saved</span>
+          <span class="snav-saved-count" id="snav-saved-count">0</span>
+        </button>
+        <button class="snav-btn" id="snav-history" onclick="switchNav('history')">
+          <span class="sni">🕐</span>
+          <span class="snav-label">History</span>
+        </button>
+        <button class="snav-btn" id="snav-account" onclick="switchNav('account')">
+          <span class="sni">👤</span>
+          <span class="snav-label">Account</span>
+        </button>
+      </nav>
+      <div class="sb-user" onclick="switchNav('account')">
+        <div class="sb-av">JM</div>
+        <div class="sb-user-text">
+          <div class="sb-user-name">Jane Mwangi</div>
+          <div class="sb-user-role">2 active listings</div>
+        </div>
+        <button class="sb-logout" onclick="event.stopPropagation();doLogout()" title="Sign out">🚪</button>
+      </div>
+    </aside>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+      <button class="mbnav-btn active" id="mbnav-feed" onclick="switchNav('feed')">
+        <span class="sni">🏠</span>
+        <span class="snav-label">Explore</span>
+      </button>
+      <button class="mbnav-btn" id="mbnav-posting" onclick="switchNav('posting')">
+        <span class="sni">📝</span>
+        <span class="snav-label">Listings</span>
+        <div class="snav-dot"></div>
+      </button>
+      <button class="mbnav-btn" id="mbnav-saved" onclick="switchNav('saved')">
+        <span class="sni">🔖</span>
+        <span class="snav-label">Saved</span>
+      </button>
+      <button class="mbnav-btn" id="mbnav-history" onclick="switchNav('history')">
+        <span class="sni">🕐</span>
+        <span class="snav-label">History</span>
+      </button>
+      <button class="mbnav-btn" id="mbnav-account" onclick="switchNav('account')">
+        <span class="sni">👤</span>
+        <span class="snav-label">Account</span>
+      </button>
+    </nav>
+
+    <!-- Main -->
+    <div class="main-area">
+      <div class="topbar" id="main-topbar">
+        <div class="topbar-title" id="topbar-title">Explore Listings</div>
+        <div class="topbar-actions" id="topbar-actions">
+          <div class="tbar-chip" onclick="toast('📍 Westlands, Nairobi','ok')">📍 Westlands</div>
+          <button class="tbar-icon-btn" onclick="toast('No new notifications','')">🔔</button>
+        </div>
+      </div>
+
+      <div class="content-area" id="content-area">
+
+        <!-- ── FEED ── -->
+        <div id="p-feed">
+          <div id="p-feed-inner" style="padding:28px;">
+            <div class="feed-header">
+              <div class="feed-header-left">
+                <div class="feed-greeting">Good morning, Jane 👋</div>
+                <div class="feed-headline">Find your<br><em>perfect home.</em></div>
+              </div>
+              <div class="feed-header-right">
+                <div class="search-bar">
+                  <span class="search-icon">🔍</span>
+                  <input type="text" id="feed-search" placeholder="Search Kilimani, Karen, Westlands...">
+                </div>
+                <button class="filter-btn" id="filter-btn" onclick="openFilterModal()">⚙️ &nbsp;Filters</button>
+                <button class="notify-btn" id="notify-btn" onclick="openNotifyModal()">🔔 &nbsp;Notify Me</button>
+              </div>
+            </div>
+
+            <div class="stats-row">
+              <div class="stat-card">
+                <div class="stat-icon">🏘️</div>
+                <div><div class="stat-val">24</div><div class="stat-lbl">Listed Today</div></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">📍</div>
+                <div><div class="stat-val">8</div><div class="stat-lbl">Near You</div></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">⚡</div>
+                <div><div class="stat-val">3</div><div class="stat-lbl">New this Hour</div></div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div><div class="stat-val">91%</div><div class="stat-lbl">Response Rate</div></div>
+              </div>
+            </div>
+
+            <div class="sec-head">
+              <div class="sec-title">Featured Nearby</div>
+              <span class="sec-link" onclick="toast('Showing all featured','')">See all →</span>
+            </div>
+            <div class="featured-scroll" id="featured-scroll"></div>
+
+            <div class="sec-head" style="margin-top:4px;">
+              <div class="sec-title">All Listings <span style="font-size:14px;font-weight:400;color:var(--text3)">(24)</span></div>
+              <span class="sec-link" onclick="toast('Sort options coming soon','')">Sort ↕</span>
+            </div>
+            <div class="prop-grid" id="prop-grid"></div>
+            <div style="height:32px;"></div>
+          </div>
+        </div><!-- /feed -->
+
+        <!-- ── POSTING ── -->
+        <div id="p-posting" style="display:none;">
+          <div class="posting-topbar">
+            <div>
+              <div class="posting-headline">My Listings</div>
+              <div class="posting-sub">Manage your properties and track booking requests.</div>
+            </div>
+            <button class="new-post-btn" onclick="openPostForm()">+ &nbsp;New Listing</button>
+          </div>
+          <div class="post-tabs">
+            <button class="ptab active" onclick="ptab('active',this)">Active (2)</button>
+            <button class="ptab" onclick="ptab('drafts',this)">Drafts (1)</button>
+            <button class="ptab" onclick="ptab('removed',this)">Removed</button>
+          </div>
+          <div class="pcontent">
+            <div id="pt-active" class="listings-grid"></div>
+            <div id="pt-drafts" style="display:none;"></div>
+            <div id="pt-removed" style="display:none;">
+              <div class="empty-box">
+                <div class="ei">🗂️</div>
+                <p>Properties taken down or expired after 24hrs appear here.<br>You can restore them within 30 days.</p>
+              </div>
+            </div>
+          </div>
+        </div><!-- /posting -->
+
+        <!-- ── SAVED ── -->
+        <div id="p-saved" style="display:none;">
+          <div class="saved-header">
+            <h2>Saved Properties</h2>
+            <span class="saved-count" id="saved-count-label">0 saved</span>
+          </div>
+          <div class="compare-bar" id="compare-bar">
+            <span>Select 2–3 properties to compare side-by-side</span>
+            <button class="compare-btn" id="compare-btn" disabled onclick="compareSelected()">📊 Compare Selected</button>
+          </div>
+          <div class="comparison-view" id="comparison-view"></div>
+          <div class="saved-grid" id="saved-grid"></div>
+          <div class="empty-box" id="saved-empty">
+            <div class="ei">🔖</div>
+            <p>No saved properties yet.<br>Tap the ♡ heart on any listing to save it here.</p>
+            <button class="book-btn" style="width:auto;padding:12px 28px;margin-top:16px;" onclick="switchNav('feed')">🏠 Browse Listings</button>
+          </div>
+        </div><!-- /saved -->
+
+        <!-- ── HISTORY ── -->
+        <div id="p-history" style="display:none;">
+          <div class="history-wrap">
+            <div class="history-toprow">
+              <div>
+                <div class="posting-headline">Browsing History</div>
+                <div class="posting-sub">Listings you've viewed recently.</div>
+              </div>
+              <button class="history-clear-btn" onclick="clearHistory()">Clear all</button>
+            </div>
+            <div id="history-list"></div>
+            <div class="empty-box" id="history-empty" style="display:none;">
+              <div class="ei">🕐</div>
+              <p>No history yet.<br>Listings you view will appear here.</p>
+              <button class="book-btn" style="width:auto;padding:12px 28px;margin-top:16px;" onclick="switchNav('feed')">🏠 Browse Listings</button>
+            </div>
+          </div>
+        </div><!-- /history -->
+
+        <!-- ── ACCOUNT ── -->
+        <div id="p-account" style="display:none;">
+          <div class="account-grid">
+            <div>
+              <div class="acct-profile-card">
+                <div class="acct-av">JM</div>
+                <div class="acct-name">Jane Mwangi</div>
+                <div class="acct-email">jane.mwangi@gmail.com</div>
+                <div class="acct-id-pill" onclick="toast('Account ID copied!','ok')">
+                  <code>usr_abc123xyz</code>
+                  <span>· Copy</span>
+                </div>
+                <div class="acct-stats-mini">
+                  <div class="asm"><div class="asm-val">2</div><div class="asm-lbl">Active</div></div>
+                  <div class="asm"><div class="asm-val">1</div><div class="asm-lbl">Draft</div></div>
+                  <div class="asm"><div class="asm-val">3</div><div class="asm-lbl">Booked</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="settings-panels">
+              <div class="settings-card">
+                <div class="settings-card-head"><h3>Profile</h3></div>
+                <div class="srow" onclick="toast('Edit name — full app only','')">
+                  <div class="srow-icon" style="background:rgba(27,77,52,.1);">👤</div>
+                  <div class="srow-text"><strong>Full Name</strong><small>Jane Mwangi</small></div>
+                  <div class="srow-right"><span class="srow-val">Jane Mwangi</span><span class="srow-arrow">›</span></div>
+                </div>
+                <div class="srow" onclick="toast('Edit phone number','')">
+                  <div class="srow-icon" style="background:rgba(27,77,52,.1);">📞</div>
+                  <div class="srow-text"><strong>Phone Number</strong><small>Tenants contact you on this</small></div>
+                  <div class="srow-right"><span class="srow-val">+254 712 345 678</span><span class="srow-arrow">›</span></div>
+                </div>
+                <div class="srow" onclick="toast('Email changes need re-verification','')">
+                  <div class="srow-icon" style="background:rgba(80,80,220,.08);">✉️</div>
+                  <div class="srow-text"><strong>Email Address</strong><small>jane.mwangi@gmail.com</small></div>
+                  <div class="srow-right"><span class="srow-arrow">›</span></div>
+                </div>
+              </div>
+              <div class="settings-card">
+                <div class="settings-card-head"><h3>Security</h3></div>
+                <div class="srow" onclick="toast('Password reset link sent to your email','ok')">
+                  <div class="srow-icon" style="background:rgba(196,81,42,.08);">🔐</div>
+                  <div class="srow-text"><strong>Change Password</strong><small>Last changed 3 months ago</small></div>
+                  <div class="srow-right"><span class="srow-arrow">›</span></div>
+                </div>
+              </div>
+              <div class="settings-card">
+                <div class="settings-card-head"><h3>Activity</h3></div>
+                <div class="srow" onclick="switchNav('posting')">
+                  <div class="srow-icon" style="background:rgba(27,77,52,.08);">🏠</div>
+                  <div class="srow-text"><strong>My Listings</strong><small>2 active · 1 draft</small></div>
+                  <div class="srow-right"><span class="srow-arrow">›</span></div>
+                </div>
+                <div class="srow" onclick="switchNav('saved')">
+                  <div class="srow-icon" style="background:rgba(27,77,52,.08);">🔖</div>
+                  <div class="srow-text"><strong>Saved Properties</strong><small id="acct-saved-count">0 saved</small></div>
+                  <div class="srow-right"><span class="srow-arrow">›</span></div>
+                </div>
+                <div class="srow" onclick="toast('3 viewings arranged so far','')">
+                  <div class="srow-icon" style="background:rgba(27,77,52,.08);">📋</div>
+                  <div class="srow-text"><strong>Booking History</strong><small>3 viewings arranged</small></div>
+                  <div class="srow-right"><span class="srow-arrow">›</span></div>
+                </div>
+              </div>
+              <div class="settings-card">
+                <div class="settings-card-head"><h3>Preferences</h3></div>
+                <div class="srow" onclick="toggleDarkMode()" style="cursor:pointer;">
+                  <div class="srow-icon" style="background:rgba(27,77,52,.08);" id="dm-icon">🌙</div>
+                  <div class="srow-text"><strong>Dark Mode</strong><small id="dm-label">Currently light</small></div>
+                  <div class="srow-right">
+                    <div class="dm-track" id="dm-track">
+                      <div class="dm-thumb" id="dm-thumb">🌙</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="settings-card">
+                <div class="settings-card-head"><h3>Danger Zone</h3></div>
+                <div class="srow" onclick="doLogout()">
+                  <div class="srow-icon" style="background:rgba(196,81,42,.08);">🚪</div>
+                  <div class="srow-text"><strong>Sign Out</strong><small>Log out of this device</small></div>
+                  <div class="srow-right"><span class="srow-arrow">›</span></div>
+                </div>
+                <div class="srow srow-delete" onclick="openModal('m-delete-account')">
+                  <div class="srow-icon" style="background:rgba(196,81,42,.13);">🗑️</div>
+                  <div class="srow-text">
+                    <strong style="color:var(--terra);">Delete Account</strong>
+                    <small>Permanently remove your account and data</small>
+                  </div>
+                  <div class="srow-right"><span class="srow-arrow" style="color:var(--terra);">›</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div><!-- /account -->
+
+      </div><!-- /content-area -->
+    </div><!-- /main-area -->
+
+    <!-- ── DETAIL PANEL ── -->
+    <div class="detail-overlay" id="detail-overlay" onclick="overlayClose(event,'detail-overlay')">
+      <div class="detail-panel">
+        <div class="detail-topbar">
+          <div class="detail-back" onclick="closeDetail()">←</div>
+          <div class="detail-topbar-title" id="dt-title"></div>
+          <div class="detail-share" onclick="toast('🔗 Link copied!','ok')">↗</div>
+        </div>
+        <div class="detail-scroll">
+          <div id="dt-gallery" class="detail-gallery"></div>
+          <div class="gallery-dots" id="dt-dots"></div>
+          <div class="detail-body">
+            <div class="detail-loc-row">
+              <div class="detail-loc" id="dt-loc"></div>
+              <span class="new-pill" id="dt-pill" style="display:none">New</span>
+            </div>
+            <div class="detail-price" id="dt-price"></div>
+            <div class="detail-title" id="dt-name"></div>
+            <div class="detail-chips" id="dt-chips"></div>
+            <div class="detail-sec-label">About this place</div>
+            <div class="detail-desc" id="dt-desc"></div>
+
+            <!-- Landlord Reputation Section -->
+            <div class="detail-sec-label">About the Landlord</div>
+            <div class="landlord-card" id="landlord-card">
+              <div class="landlord-top">
+                <div class="landlord-av" id="ld-av">JM</div>
+                <div class="landlord-info">
+                  <div class="landlord-name" id="ld-name">Jane Mwangi</div>
+                  <div class="landlord-rating-row">
+                    <span class="landlord-stars" id="ld-stars">⭐⭐⭐⭐⭐</span>
+                    <span class="landlord-rating-num" id="ld-rating-num">4.7</span>
+                    <span class="landlord-rating-count" id="ld-rating-count">(14 ratings)</span>
+                  </div>
+                </div>
+                <div class="landlord-badge" id="ld-badge">
+                  <span>🏅 Trusted</span>
+                </div>
+              </div>
+              <div class="landlord-stats" id="ld-stats">
+                <div class="ld-stat">
+                  <div class="ld-stat-val" id="ld-posted">12</div>
+                  <div class="ld-stat-lbl">Posted</div>
+                </div>
+                <div class="ld-stat">
+                  <div class="ld-stat-val" id="ld-booked">8</div>
+                  <div class="ld-stat-lbl">Booked</div>
+                </div>
+                <div class="ld-stat">
+                  <div class="ld-stat-val" id="ld-response">94%</div>
+                  <div class="ld-stat-lbl">Response</div>
+                </div>
+              </div>
+              <div class="property-activity" id="property-activity">
+                <div class="pa-item">👁 <span id="pa-views">243</span> views</div>
+                <div class="pa-item">💾 <span id="pa-saves">18</span> saves</div>
+                <div class="pa-item">📅 <span id="pa-bookings">3</span> bookings</div>
+              </div>
+              <div class="landlord-reviews" id="ld-reviews"></div>
+            </div>
+
+            <button class="map-btn" onclick="openMap()">📍 &nbsp;Open in Google Maps</button>
+            <div class="detail-sec-label">Book a Viewing</div>
+            <button class="book-btn" id="book-btn" onclick="doBook()">📅 &nbsp;Book This Property</button>
+            <p class="book-note">Free. The landlord will see your name and phone number.</p>
+            <div class="contact-reveal" id="contact-reveal">
+              <h3>✅ Booking Requested!</h3>
+              <p>Call or SMS the landlord to arrange your viewing time.</p>
+              <div class="contact-number">+254 700 123 456</div>
+              <div class="contact-btns">
+                <button class="cbtn cbtn-call" onclick="toast('📞 Opening phone app...','ok')">📞 Call Now</button>
+                <button class="cbtn cbtn-sms" onclick="toast('💬 Opening messages...','ok')">💬 SMS</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── POST FORM PANEL ── -->
+    <div class="form-overlay" id="form-overlay" onclick="overlayClose(event,'form-overlay')">
+      <div class="form-panel">
+        <div class="form-topbar">
+          <div class="detail-back" onclick="confirmClose()">←</div>
+          <h2>New Listing</h2>
+          <span class="form-progress" id="form-progress">0 / 5</span>
+        </div>
+        <div class="form-scroll">
+          <div class="fsec">
+            <div class="fsec-title">Basic Info</div>
+            <div class="fgroup">
+              <label class="flabel">Title</label>
+              <input type="text" class="finput" id="f-title" placeholder="e.g. Cozy 2BR Apartment in Westlands" oninput="updateProgress()">
+              <div class="fhint">The first thing tenants will read.</div>
+            </div>
+            <div class="fgroup">
+              <label class="flabel">Description</label>
+              <textarea class="finput ftextarea" id="f-desc" placeholder="Describe the property — nearby landmarks, security, parking, special features..." oninput="updateProgress()"></textarea>
+              <div class="fhint">Be detailed but clear. Tenants love specifics.</div>
+            </div>
+          </div>
+          <div class="fsec">
+            <div class="fsec-title">Details</div>
+            <div class="frow">
+              <div class="fgroup">
+                <label class="flabel">Bedrooms</label>
+                <input type="number" class="finput" id="f-beds" placeholder="2" min="0" max="20" oninput="updateProgress()">
+              </div>
+              <div class="fgroup">
+                <label class="flabel">Bathrooms</label>
+                <input type="number" class="finput" id="f-baths" placeholder="1.5" step="0.5" min="0" oninput="updateProgress()">
+              </div>
+            </div>
+            <div class="fgroup">
+              <label class="flabel">Monthly Rent</label>
+              <div class="prefix-wrap">
+                <span class="prefix">KSh</span>
+                <input type="number" class="finput" id="f-price" placeholder="35000" oninput="updateProgress()">
+              </div>
+            </div>
+          </div>
+          <div class="fsec">
+            <div class="fsec-title">Photos</div>
+            <div class="photo-zone" id="pz" onclick="addPhotos()">
+              <div class="pz-icon">+</div>
+              <div class="pz-label">Click to add photos</div>
+              <div class="pz-sub">First photo becomes the cover image · Max 20 photos</div>
+            </div>
+            <div class="thumb-grid" id="thumb-grid"></div>
+            <div class="fhint" style="margin-top:8px;">Images are automatically compressed to ~200KB in your browser. EXIF data (GPS, camera) is stripped for privacy.</div>
+          </div>
+          <div class="fsec">
+            <div class="fsec-title">Location</div>
+            <button class="loc-option lo-green" id="lo-gps" onclick="captureGPS()">
+              <span class="lo-icon">📍</span>
+              <span>
+                <span class="lo-main">Use my current location</span>
+                <span class="lo-sub">Easiest if you're at the property right now</span>
+              </span>
+            </button>
+            <button class="loc-option lo-neutral" id="lo-manual" onclick="openModal('m-coords')">
+              <span class="lo-icon">🗺️</span>
+              <span>
+                <span class="lo-main">Enter coordinates manually</span>
+                <span class="lo-sub">If you're far away or on a VPN</span>
+              </span>
+            </button>
+            <div id="loc-msg" style="font-size:12px;color:var(--text4);"></div>
+          </div>
+        </div>
+        <div class="form-footer">
+          <button class="submit-btn" id="submit-btn" onclick="submitPost()">🚀 &nbsp;Post Property</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── NOTIFY ME MODAL ── -->
+    <div class="modal-bg" id="m-notify" onclick="outsideCloseModal(event,'m-notify')">
+      <div class="modal-card" style="max-width:500px;">
+        <div class="modal-hdr">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:20px;">🔔</span>
+            <h3>Notify Me When Available</h3>
+          </div>
+          <div class="modal-x" onclick="closeModal('m-notify')">✕</div>
+        </div>
+        <div class="modal-body" style="padding-bottom:8px;">
+          <p class="notify-intro">Describe your ideal property. We'll alert you the moment something matching — or close to it — is listed.</p>
+
+          <label class="filter-label">Preferred Location</label>
+          <div class="chips" id="nch-county">
+            <button class="chip on" onclick="pickChip(this,'nch-county')">Anywhere</button>
+            <button class="chip" onclick="pickChip(this,'nch-county')">🏙️ Nairobi</button>
+            <button class="chip" onclick="pickChip(this,'nch-county')">🌊 Mombasa</button>
+            <button class="chip" onclick="pickChip(this,'nch-county')">🐟 Kisumu</button>
+            <button class="chip" onclick="pickChip(this,'nch-county')">🌿 Nakuru</button>
+            <button class="chip" onclick="pickChip(this,'nch-county')">⛰️ Eldoret</button>
+          </div>
+
+          <label class="filter-label">Budget</label>
+          <div class="price-slider-wrap">
+            <div class="price-inputs-row">
+              <div class="price-input-box">
+                <label>Min (KSh)</label>
+                <span class="price-input-prefix">KSh</span>
+                <input type="number" id="n-min-input" min="0" max="999999" step="1000" value="0" placeholder="0" oninput="syncFromInputs('n')">
+              </div>
+              <div class="price-sep">—</div>
+              <div class="price-input-box">
+                <label>Max (KSh)</label>
+                <span class="price-input-prefix">KSh</span>
+                <input type="number" id="n-max-input" min="0" max="999999" step="1000" value="300000" placeholder="Any" oninput="syncFromInputs('n')">
+              </div>
+            </div>
+            <div class="price-track">
+              <div class="price-track-bg"></div>
+              <div class="price-fill" id="n-price-fill"></div>
+              <input type="range" class="price-range" id="n-range-min" min="0" max="300000" value="0" step="1000" oninput="syncFromSliders('n')">
+              <input type="range" class="price-range" id="n-range-max" min="0" max="300000" value="300000" step="1000" oninput="syncFromSliders('n')">
+            </div>
+            <div class="price-labels">
+              <span>KSh 0</span><span>KSh 150k</span><span>KSh 300k+</span>
+            </div>
+          </div>
+
+          <label class="filter-label">Property Type</label>
+          <div class="chips" id="nch-type">
+            <button class="chip on" onclick="pickChip(this,'nch-type')">Any</button>
+            <button class="chip" onclick="pickChip(this,'nch-type')">Apartment</button>
+            <button class="chip" onclick="pickChip(this,'nch-type')">Studio</button>
+            <button class="chip" onclick="pickChip(this,'nch-type')">Townhouse</button>
+            <button class="chip" onclick="pickChip(this,'nch-type')">Maisonette</button>
+            <button class="chip" onclick="pickChip(this,'nch-type')">Bedsitter</button>
+          </div>
+
+          <label class="filter-label">Bedrooms</label>
+          <div class="chips" id="nch-beds">
+            <button class="chip on" onclick="pickChip(this,'nch-beds')">Any</button>
+            <button class="chip" onclick="pickChip(this,'nch-beds')">Studio</button>
+            <button class="chip" onclick="pickChip(this,'nch-beds')">1</button>
+            <button class="chip" onclick="pickChip(this,'nch-beds')">2</button>
+            <button class="chip" onclick="pickChip(this,'nch-beds')">3</button>
+            <button class="chip" onclick="pickChip(this,'nch-beds')">4+</button>
+          </div>
+
+          <label class="filter-label">Alert me when a match is</label>
+          <div class="chips" id="nch-match">
+            <button class="chip on" onclick="pickChip(this,'nch-match')">Exact</button>
+            <button class="chip" onclick="pickChip(this,'nch-match')">Close (±20%)</button>
+            <button class="chip" onclick="pickChip(this,'nch-match')">Loose (±40%)</button>
+          </div>
+
+          <label class="filter-label">How to notify me</label>
+          <div class="chips" id="nch-how">
+            <button class="chip on" onclick="pickChip(this,'nch-how')">📱 In-app</button>
+            <button class="chip" onclick="pickChip(this,'nch-how')">📧 Email</button>
+            <button class="chip" onclick="pickChip(this,'nch-how')">💬 SMS</button>
+          </div>
+
+          <div id="notify-active-section" style="display:none;margin-top:16px;">
+            <label class="filter-label" style="margin-bottom:8px;">Your active alerts</label>
+            <div id="notify-alerts-list"></div>
+          </div>
+
+          <div class="notify-footer">
+            <button class="notify-cancel-btn" onclick="closeModal('m-notify')">Cancel</button>
+            <button class="notify-save-btn" onclick="saveNotifyAlert()">🔔 &nbsp;Save Alert</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── FILTER MODAL ── -->
+    <div class="modal-bg" id="m-filter" onclick="outsideCloseModal(event,'m-filter')">
+      <div class="modal-card">
+        <div class="modal-hdr">
+          <h3>Filter Listings</h3>
+          <div class="modal-x" onclick="closeModal('m-filter')">✕</div>
+        </div>
+        <div class="modal-body">
+          <label class="filter-label">Location</label>
+          <button class="loc-filter-btn" id="f-nearme-btn" onclick="filterNearMe()">
+            <span id="f-nearme-icon">📍</span>
+            <span id="f-nearme-text">Use my current location</span>
+          </button>
+          <div class="filter-divider"><span>or choose a county</span></div>
+          <div class="county-grid" id="ch-county">
+            <button class="county-chip on" onclick="pickCounty(this,'any')">All Kenya</button>
+            <button class="county-chip" onclick="pickCounty(this,'nairobi')">🏙️ Nairobi</button>
+            <button class="county-chip" onclick="pickCounty(this,'mombasa')">🌊 Mombasa</button>
+            <button class="county-chip" onclick="pickCounty(this,'kisumu')">🐟 Kisumu</button>
+            <button class="county-chip" onclick="pickCounty(this,'nakuru')">🌿 Nakuru</button>
+            <button class="county-chip" onclick="pickCounty(this,'eldoret')">⛰️ Eldoret</button>
+            <button class="county-chip" onclick="pickCounty(this,'thika')">🏭 Thika</button>
+            <button class="county-chip" onclick="pickCounty(this,'nyeri')">🌄 Nyeri</button>
+          </div>
+
+          <label class="filter-label">Price Range</label>
+          <div class="price-slider-wrap">
+            <div class="price-inputs-row">
+              <div class="price-input-box">
+                <label>Min (KSh)</label>
+                <span class="price-input-prefix">KSh</span>
+                <input type="number" id="f-min-input" min="0" max="999999" step="1000" value="0" placeholder="0" oninput="syncFromInputs('f')">
+              </div>
+              <div class="price-sep">—</div>
+              <div class="price-input-box">
+                <label>Max (KSh)</label>
+                <span class="price-input-prefix">KSh</span>
+                <input type="number" id="f-max-input" min="0" max="999999" step="1000" value="300000" placeholder="Any" oninput="syncFromInputs('f')">
+              </div>
+            </div>
+            <div class="price-track">
+              <div class="price-track-bg"></div>
+              <div class="price-fill" id="price-fill"></div>
+              <input type="range" class="price-range" id="f-range-min" min="0" max="300000" value="0" step="1000" oninput="syncFromSliders('f')">
+              <input type="range" class="price-range" id="f-range-max" min="0" max="300000" value="300000" step="1000" oninput="syncFromSliders('f')">
+            </div>
+            <div class="price-labels">
+              <span>KSh 0</span><span>KSh 150k</span><span>KSh 300k+</span>
+            </div>
+          </div>
+
+          <label class="filter-label">Property Type</label>
+          <div class="chips" id="ch-type">
+            <button class="chip on" onclick="pickChip(this,'ch-type')">Any</button>
+            <button class="chip" onclick="pickChip(this,'ch-type')">Apartment</button>
+            <button class="chip" onclick="pickChip(this,'ch-type')">Studio</button>
+            <button class="chip" onclick="pickChip(this,'ch-type')">Townhouse</button>
+            <button class="chip" onclick="pickChip(this,'ch-type')">Maisonette</button>
+            <button class="chip" onclick="pickChip(this,'ch-type')">Bedsitter</button>
+          </div>
+
+          <label class="filter-label">Bedrooms</label>
+          <div class="chips" id="ch-beds">
+            <button class="chip on" onclick="pickChip(this,'ch-beds')">Any</button>
+            <button class="chip" onclick="pickChip(this,'ch-beds')">Studio</button>
+            <button class="chip" onclick="pickChip(this,'ch-beds')">1</button>
+            <button class="chip" onclick="pickChip(this,'ch-beds')">2</button>
+            <button class="chip" onclick="pickChip(this,'ch-beds')">3</button>
+            <button class="chip" onclick="pickChip(this,'ch-beds')">4+</button>
+          </div>
+
+          <label class="filter-label">Bathrooms</label>
+          <div class="chips" id="ch-baths">
+            <button class="chip on" onclick="pickChip(this,'ch-baths')">Any</button>
+            <button class="chip" onclick="pickChip(this,'ch-baths')">1</button>
+            <button class="chip" onclick="pickChip(this,'ch-baths')">1.5</button>
+            <button class="chip" onclick="pickChip(this,'ch-baths')">2</button>
+            <button class="chip" onclick="pickChip(this,'ch-baths')">3+</button>
+          </div>
+
+          <label class="filter-label">Furnishing</label>
+          <div class="chips" id="ch-furnish">
+            <button class="chip on" onclick="pickChip(this,'ch-furnish')">Any</button>
+            <button class="chip" onclick="pickChip(this,'ch-furnish')">Furnished</button>
+            <button class="chip" onclick="pickChip(this,'ch-furnish')">Unfurnished</button>
+            <button class="chip" onclick="pickChip(this,'ch-furnish')">Part-furnished</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="mf-clear" onclick="clearFilters()">Clear All</button>
+          <button class="mf-apply" onclick="applyFilters()">Apply Filters</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DELETE ACCOUNT MODAL ── -->
+    <div class="modal-bg" id="m-delete-account" onclick="outsideCloseModal(event,'m-delete-account')">
+      <div class="confirm-card">
+        <div style="font-size:36px;margin-bottom:12px;text-align:center;">⚠️</div>
+        <h3 style="text-align:center;color:var(--terra);">Delete your account?</h3>
+        <p style="text-align:center;">Your account and all data will be <strong>scheduled for deletion in 30 days.</strong> You can cancel anytime by signing back in before then.</p>
+        <div style="background:rgba(196,81,42,.06);border:1.5px solid rgba(196,81,42,.2);border-radius:10px;padding:14px 16px;margin-bottom:22px;">
+          <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+            <div>🏠 &nbsp;Your <strong>active listings</strong> will be taken down immediately</div>
+            <div>🔖 &nbsp;Your <strong>saved properties</strong> will be removed</div>
+            <div>📋 &nbsp;Your <strong>booking history</strong> will be erased</div>
+            <div>↩️ &nbsp;You have <strong>30 days</strong> to change your mind</div>
+          </div>
+        </div>
+        <div id="delete-confirm-step">
+          <button class="conf-btn conf-discard" onclick="showDeleteConfirm()">Yes, delete my account</button>
+          <button class="conf-btn conf-cancel" onclick="closeModal('m-delete-account')">Cancel — keep my account</button>
+        </div>
+        <div id="delete-type-step" style="display:none;">
+          <p style="text-align:center;font-size:13px;color:var(--terra);font-weight:600;margin-bottom:10px;">Type DELETE to confirm</p>
+          <input type="text" id="delete-confirm-input" class="delete-input" placeholder="Type DELETE here" oninput="checkDeleteInput(this)">
+          <button class="conf-btn conf-discard" id="delete-final-btn" onclick="doDeleteAccount()" disabled style="opacity:.4;margin-top:10px;">Schedule Account Deletion</button>
+          <button class="conf-btn conf-cancel" onclick="resetDeleteModal()">Go back</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── COORDS MODAL ── -->
+    <div class="modal-bg" id="m-coords" onclick="outsideCloseModal(event,'m-coords')">
+      <div class="coords-card">
+        <h3>Enter Coordinates</h3>
+        <div class="step-row"><div class="step-circle">1</div><div class="step-txt">Open <strong>Google Maps</strong> in your browser or on your phone 🌍</div></div>
+        <div class="step-row"><div class="step-circle">2</div><div class="step-txt">Right-click (desktop) or long-press (mobile) on the exact property location, then click <code>"What's here?"</code> 📍</div></div>
+        <div class="step-row"><div class="step-circle">3</div><div class="step-txt">Copy the two numbers shown — they look like <code>-1.2864, 36.8172</code> 📋</div></div>
+        <div class="step-row"><div class="step-circle">4</div><div class="step-txt">Paste them in the field below ⬇️</div></div>
+        <div style="margin-top:14px;">
+          <input type="text" class="finput" id="coord-in" placeholder="-1.286389, 36.817223" oninput="checkCoords()">
+          <div id="coord-hint" style="font-size:11px;color:var(--text4);margin-top:4px;">Paste latitude and longitude separated by a comma</div>
+        </div>
+        <div class="coords-btns">
+          <button class="cb-cancel" onclick="closeModal('m-coords')">Cancel</button>
+          <button class="cb-save" id="cb-save" onclick="saveCoords()">Save Coordinates</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CANCEL CONFIRM ── -->
+    <div class="modal-bg" id="m-cancel" onclick="outsideCloseModal(event,'m-cancel')">
+      <div class="confirm-card">
+        <h3>Leave this listing?</h3>
+        <p>You have unsaved changes. Would you like to save this as a draft before leaving?</p>
+        <button class="conf-btn conf-draft" onclick="saveDraft()">💾 Save as Draft</button>
+        <button class="conf-btn conf-discard" onclick="discardForm()">🗑️ Discard Changes</button>
+        <button class="conf-btn conf-cancel" onclick="closeModal('m-cancel')">Keep Editing</button>
+      </div>
+    </div>
+
+  </div><!-- /app-screen -->
+
+  <!-- Toast -->
+  <div class="toast" id="toast-el"></div>
+
+  <!-- Supabase Client Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Eneo Configuration -->
+  <script src="js/config.js"></script>
+
+  <!-- Application Logic -->
+  <script src="js/app.js" defer></script>
+
+</body>
+</html>
