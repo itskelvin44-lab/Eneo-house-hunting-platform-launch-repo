@@ -428,7 +428,11 @@ async function signIn(email, password) {
     return { data: { user: { id: 'mock-user-id', email } }, error: null };
   }
   const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-  if (error) return { data: null, error };
+  if (error) {
+    window.alert('Incorrect email or password. If you signed up with Google, use "Continue with Google".');
+    toast('Incorrect email or password. If you signed up with Google, use "Continue with Google".', 'err');
+    return { data: null, error };
+  }
   const { data: profile } = await supabaseClient.from('users').select('*').eq('id', data.user.id).single();
   if (!profile) {
     await supabaseClient.from('users').insert({
@@ -2651,7 +2655,7 @@ async function doDeleteAccount() {
 
   try {
     console.log('🔍 Starting deletion for:', user.id);
-    
+
     // 1. Delete all photos from storage for each property owned
     const { data: myProps } = await supabaseClient
       .from('properties')
