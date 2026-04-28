@@ -635,12 +635,12 @@ async function doLogin(btn) {
 
 async function doLogout() {
   await signOut();
-  document.getElementById('app-screen').classList.remove('active');
-  document.getElementById('login-screen').classList.add('active');
   savedProps = [];
-  localStorage.removeItem('eneo-saved');
   browsingHistory = [];
   notifyAlerts = [];
+  localStorage.clear();
+  document.getElementById('app-screen').classList.remove('active');
+  document.getElementById('login-screen').classList.add('active');
   updateSavedCountBadge();
   toast('Signed out', 'ok');
 }
