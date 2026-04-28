@@ -18,12 +18,22 @@ function initSupabase() {
 
 // Initialize on load
 supabaseClient = initSupabase();
+
 // Check for existing session on page load (handles OAuth redirect back)
 (async function checkExistingSession() {
-  if (!supabaseClient) return;
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if (session) {
-    // Ensure public.users row exists for OAuth users
+  try {
+    if (!supabaseClient) return;
+    const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+    if (sessionError || !session) {
+      console.warn('⚠️ No valid session — forcing login screen');
+      try { await supabaseClient.auth.signOut(); } catch (e) { /* ignore */ }
+      localStorage.removeItem('eneo-saved');
+      localStorage.removeItem('eneo-location');
+      document.getElementById('login-screen').classList.add('active');
+      document.getElementById('app-screen').classList.remove('active');
+      return;
+    }
+    // Valid session — ensure public.users row exists for OAuth users
     const { data: profile } = await supabaseClient
       .from('users')
       .select('id')
@@ -38,7 +48,6 @@ supabaseClient = initSupabase();
         account_id: 'usr_' + session.user.id.substring(0, 10)
       });
     }
-    // Bypass login screen, go straight to app
     document.getElementById('login-screen').classList.remove('active');
     document.getElementById('app-screen').classList.add('active');
     renderFeed();
@@ -47,9 +56,12 @@ supabaseClient = initSupabase();
     loadSavedFromDB();
     loadHistoryFromDB();
     loadAlertsFromDB();
+  } catch (e) {
+    console.warn('Session check failed, showing login screen');
+    document.getElementById('login-screen').classList.add('active');
+    document.getElementById('app-screen').classList.remove('active');
   }
 })();
-
 
 // ═══ DATA LAYER ═══════════════════════════════════
 
@@ -354,6 +366,7 @@ async function saveAlert(alertData) {
     return { data: { id: Date.now() }, error: null };
   }
   const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) return { data: null, error: 'Not authenticated' };
   return await supabaseClient.from('notify_alerts').insert({
     ...alertData,
     user_id: user.id
@@ -365,6 +378,7 @@ async function fetchAlerts() {
     return { data: [], error: null };
   }
   const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) return { data: [], error: 'Not authenticated' };
   return await supabaseClient.from('notify_alerts').select('*').eq('user_id', user.id);
 }
 
@@ -373,22 +387,39 @@ async function signUp(email, password, name, phone) {
   if (ENEO_CONFIG.useMockAuth || !supabaseClient) {
     return { data: { user: { id: 'mock-user-id', email } }, error: null };
   }
+
   const { data, error } = await supabaseClient.auth.signUp({
     email,
     password,
     options: { data: { full_name: name, phone } }
   });
-  if (error) return { data: null, error };
+
+  if (error) {
+    // If user already exists, suggest signing in
+    if (error.message && error.message.includes('already registered')) {
+      return { data: null, error: { message: 'An account with this email already exists. Please sign in instead.' } };
+    }
+    return { data: null, error };
+  }
+
   if (data.user) {
     const accountId = 'usr_' + data.user.id.substring(0, 10);
-    await supabaseClient.from('users').insert({
+    // Insert into public.users — ignore if already exists (edge case)
+    const { error: insertError } = await supabaseClient.from('users').insert({
       id: data.user.id,
       email: email,
       name: name,
       phone: phone,
       account_id: accountId
     });
+
+    // If duplicate, it's okay — user already has a profile
+    if (insertError && insertError.code !== '23505') {
+      // 23505 is unique violation, which we ignore
+      console.warn('⚠️ Could not insert user profile:', insertError);
+    }
   }
+
   return { data, error: null };
 }
 
@@ -429,6 +460,7 @@ async function getUserProfile() {
     return { data: { account_id: 'usr_abc123xyz', name: 'Jane Mwangi', phone: '+254 712 345 678' }, error: null };
   }
   const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) return { data: null, error: 'Not authenticated' };
   return await supabaseClient.from('users').select('*').eq('id', user.id).single();
 }
 
@@ -534,10 +566,25 @@ async function doLogin(btn) {
   btn.disabled = true;
 
   const isSignIn = document.getElementById('form-in').style.display !== 'none';
+  
   const formId = isSignIn ? 'form-in' : 'form-up';
   const form = document.getElementById(formId);
-  const email = form.querySelector('input[type="email"]').value;
-  const password = form.querySelector('input[type="password"]').value;
+  if (!form) {
+    toast('Form not found. Please refresh.', 'err');
+    btn.innerHTML = isSignIn ? 'Sign In →' : 'Create Account →';
+    btn.disabled = false;
+    return;
+  }
+  const emailInput = form.querySelector('input[type="email"]');
+  const passwordInput = form.querySelector('input[type="password"]');
+  if (!emailInput || !passwordInput) {
+    toast('Form error. Please refresh the page.', 'err');
+    btn.innerHTML = isSignIn ? 'Sign In →' : 'Create Account →';
+    btn.disabled = false;
+    return;
+  }
+  const email = emailInput.value;
+  const password = passwordInput.value;
 
   if (!email || !password) {
     toast('Please fill in all fields', 'err');
@@ -556,12 +603,25 @@ async function doLogin(btn) {
   }
 
   if (result.error) {
-        toast('Incorrect email or password. Please try again.', 'err');
+    toast('Incorrect email or password. Please try again.', 'err');
+    btn.innerHTML = isSignIn ? 'Sign In →' : 'Create Account →';
+    btn.disabled = false;
+    return;
+  }
+  if (result.error) {
+    toast('Incorrect email or password. Please try again.', 'err');
     btn.innerHTML = isSignIn ? 'Sign In →' : 'Create Account →';
     btn.disabled = false;
     return;
   }
 
+  // ADD THIS BLOCK RIGHT HERE
+  if (!result.data || !result.data.user) {
+    toast('Login failed. Please try again.', 'err');
+    btn.innerHTML = isSignIn ? 'Sign In →' : 'Create Account →';
+    btn.disabled = false;
+    return;
+  }
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('app-screen').classList.add('active');
   renderFeed();
