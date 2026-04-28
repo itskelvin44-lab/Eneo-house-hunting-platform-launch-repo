@@ -83,7 +83,7 @@
           <div class="auth-heading">Welcome back.</div>
           <div class="auth-sub">Sign in to your Eneo account to continue.</div>
           <div class="field"><label>Email</label><input type="email" placeholder="jane@example.com"></div>
-          <div class="field"><label>Password</label><input type="password" placeholder="••••••••"></div>
+          <div class="field"><label>Password</label><div style="position:relative;"><input type="password" id="signin-password" placeholder="••••••••" style="padding-right:44px;"><span onclick="togglePassword('signin-password',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:18px;user-select:none;color:var(--text3);">👁</span></div></div>
           <button class="login-cta" onclick="doLogin(this)">Sign In →</button>
           <p style="text-align:center;font-size:13px;color:var(--text3);margin-top:14px;">Forgot password? <a
               style="color:var(--forest);font-weight:600;cursor:pointer;" onclick="forgotPassword()">Reset it →</a></p>
@@ -95,7 +95,7 @@
           <div class="field"><label>Full Name</label><input type="text" placeholder="Jane Mwangi"></div>
           <div class="field"><label>Email</label><input type="email" placeholder="jane@example.com"></div>
           <div class="field"><label>Phone</label><input type="tel" placeholder="+254 7XX XXX XXX"></div>
-          <div class="field"><label>Password</label><input type="password" placeholder="Create a strong password"></div>
+          <div class="field"><label>Password</label><div style="position:relative;"><input type="password" id="signup-password" placeholder="Create a strong password" style="padding-right:44px;"><span onclick="togglePassword('signup-password',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:18px;user-select:none;color:var(--text3);">👁</span></div></div>
           <button class="login-cta" onclick="doLogin(this)">Create Account →</button>
         </div>
 

@@ -465,6 +465,17 @@ function overlayClosed() {
 }
 
 // ═══ AUTH ══════════════════════════════════════════
+function togglePassword(inputId, icon) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    icon.textContent = '👁';
+  }
+}
 
 function authSwitch(t, el) {
   document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
@@ -545,7 +556,7 @@ async function doLogin(btn) {
   }
 
   if (result.error) {
-    toast(result.error.message || 'Login failed. Try again.', 'err');
+        toast('Incorrect email or password. Please try again.', 'err');
     btn.innerHTML = isSignIn ? 'Sign In →' : 'Create Account →';
     btn.disabled = false;
     return;
