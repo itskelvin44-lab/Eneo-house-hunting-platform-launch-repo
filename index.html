@@ -963,16 +963,16 @@
       <div class="modal-bg" id="m-delete-account" onclick="outsideCloseModal(event,'m-delete-account')">
         <div class="confirm-card">
           <div style="font-size:36px;margin-bottom:12px;text-align:center;">⚠️</div>
-          <h3 style="text-align:center;color:var(--terra);">Delete your account?</h3>
-          <p style="text-align:center;">Your account and all data will be <strong>scheduled for deletion in 30
-              days.</strong> You can cancel anytime by signing back in before then.</p>
+          <h3 style="text-align:center;color:var(--terra);">Delete your account permanently?</h3>
+          <p style="text-align:center;">Your account and all associated data will be <strong>deleted immediately and
+              cannot be recovered.</strong></p>
           <div
             style="background:rgba(196,81,42,.06);border:1.5px solid rgba(196,81,42,.2);border-radius:10px;padding:14px 16px;margin-bottom:22px;">
             <div style="font-size:12px;color:var(--text2);line-height:1.8;">
-              <div>🏠 &nbsp;Your <strong>active listings</strong> will be taken down immediately</div>
+              <div>🏠 &nbsp;Your <strong>properties and photos</strong> will be permanently deleted</div>
               <div>🔖 &nbsp;Your <strong>saved properties</strong> will be removed</div>
               <div>📋 &nbsp;Your <strong>booking history</strong> will be erased</div>
-              <div>↩️ &nbsp;You have <strong>30 days</strong> to change your mind</div>
+              <div>⚠️ &nbsp;This action <strong>cannot be undone</strong></div>
             </div>
           </div>
           <div id="delete-confirm-step">
@@ -987,8 +987,8 @@
             <input type="text" id="delete-confirm-input" class="delete-input" placeholder="Type DELETE here"
               oninput="checkDeleteInput(this)">
             <button class="conf-btn conf-discard" id="delete-final-btn" onclick="doDeleteAccount()" disabled
-              style="opacity:.4;margin-top:10px;">Schedule Account Deletion</button>
-            <button class="conf-btn conf-cancel" onclick="resetDeleteModal()">Go back</button>
+              style="opacity:.4;margin-top:10px;">Delete My Account Permanently</button>
+            <button class="conf-btn conf-cancel" onclick="resetDeleteModal()" style="margin-top:8px;">Go back</button>
           </div>
         </div>
       </div>
