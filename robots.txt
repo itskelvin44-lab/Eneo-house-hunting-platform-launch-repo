@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 Disallow: /cdn-cgi/
-Sitemap: https://YOUR-DOMAIN.pages.dev/sitemap.xml
+Sitemap: https://eneo-ke.pages.dev/sitemap.xml
