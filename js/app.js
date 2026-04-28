@@ -1096,6 +1096,7 @@ function openPostForm(existingData = null) {
     document.getElementById('f-baths').value = existingData.baths || 0;
     document.getElementById('f-price').value = existingData.price || '';
     document.getElementById('f-area').value = existingData.area || '';
+    document.getElementById('f-location').value = existingData.location || '';
     if (existingData.photos && existingData.photos.length) {
       photosAdded = true;
       document.getElementById('pz').style.display = 'none';
@@ -1116,7 +1117,7 @@ function openPostForm(existingData = null) {
     document.getElementById('submit-btn').innerHTML = '🔄 &nbsp;Update Listing';
     document.getElementById('form-overlay')._editingId = existingData.id;
   } else {
-    ['f-title', 'f-desc', 'f-beds', 'f-baths', 'f-area', 'f-price'].forEach(id => {
+    ['f-title', 'f-desc', 'f-beds', 'f-baths', 'f-area', 'f-location', 'f-price'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
@@ -1371,6 +1372,7 @@ async function submitPost() {
         bedrooms: beds,
         baths,
         area,
+        location: document.getElementById('f-location')?.value || '',
         latitude: lat,
         longitude: lng,
         county,
@@ -1565,6 +1567,7 @@ async function openDetail(propId) {
     baths: p.baths ?? 1,
     type: p.property_type ?? p.type ?? 'Apartment',
     loc: p.location ?? p.loc ?? '',
+    desc: p.description ?? p.desc ?? '',
     area: p.area ?? 'N/A',
     isNew: p.isNew ?? false,
     photos: Array.isArray(p.photos) ? p.photos : (typeof p.photos === 'string' ? JSON.parse(p.photos) : []),
