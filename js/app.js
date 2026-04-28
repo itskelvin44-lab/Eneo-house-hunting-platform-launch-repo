@@ -2650,11 +2650,14 @@ async function doDeleteAccount() {
   if (!user) { closeModal('m-delete-account'); resetDeleteModal(); doLogout(); return; }
 
   try {
+    console.log('🔍 Starting deletion for:', user.id);
+    
     // 1. Delete all photos from storage for each property owned
     const { data: myProps } = await supabaseClient
       .from('properties')
       .select('id, photos')
       .eq('landlord_id', user.id);
+    console.log('🔍 Step 1 done, properties:', myProps?.length || 0);
 
     if (myProps && myProps.length) {
       for (const prop of myProps) {
@@ -2666,26 +2669,37 @@ async function doDeleteAccount() {
           }
         }
       }
+      console.log('🔍 Photos deleted');
     }
 
     // 2. Delete saved properties & browsing history & reviews
+    console.log('🔍 Step 2: Clearing user data...');
     await supabaseClient.from('saved_properties').delete().eq('user_id', user.id);
     await supabaseClient.from('browsing_history').delete().eq('user_id', user.id);
     await supabaseClient.from('notify_alerts').delete().eq('user_id', user.id);
     await supabaseClient.from('reviews').delete().eq('reviewer_id', user.id);
     await supabaseClient.from('reviews').delete().eq('landlord_id', user.id);
+    console.log('🔍 Step 2 done');
 
     // 3. Delete bookings made by this user
+    console.log('🔍 Step 3: Deleting bookings...');
     await supabaseClient.from('bookings').delete().eq('tenant_id', user.id);
+    console.log('🔍 Step 3 done');
 
     // 4. Delete properties (cascades to bookings on those properties)
+    console.log('🔍 Step 4: Deleting properties...');
     await supabaseClient.from('properties').delete().eq('landlord_id', user.id);
+    console.log('🔍 Step 4 done');
 
-    // 5. Delete user from public.users (must be before auth.users due to FK)
+    // 5. Delete user from public.users
+    console.log('🔍 Step 5: Deleting from public.users...');
     await supabaseClient.from('users').delete().eq('id', user.id);
+    console.log('🔍 Step 5 done');
 
-    // 6. Sign out (this removes the session, auth.user deletion handled by Supabase)
+    // 6. Sign out
+    console.log('🔍 Step 6: Signing out...');
     await signOut();
+    console.log('🔍 All done');
 
     closeModal('m-delete-account');
     resetDeleteModal();
@@ -2696,8 +2710,8 @@ async function doDeleteAccount() {
     toast('🗑️ Account permanently deleted', 'ok');
 
   } catch (err) {
+    console.error('🔍 Delete account error at step:', err);
     toast('Failed to delete account. Please try again.', 'err');
-    console.error('Delete account error:', err);
   }
 }
 
@@ -2727,11 +2741,16 @@ async function signInWithGoogle() {
 
 function toast(msg, type) {
   const el = document.getElementById('toast-el');
+  if (!el) return;
   el.textContent = msg;
   el.className = 'toast ' + (type || '');
+  el.style.opacity = '1';
+  el.style.display = 'block';
   clearTimeout(_tt);
-  requestAnimationFrame(() => el.classList.add('vis'));
-  _tt = setTimeout(() => el.classList.remove('vis'), 2800);
+  _tt = setTimeout(() => {
+    el.style.opacity = '0';
+    setTimeout(() => { el.style.display = 'none'; }, 300);
+  }, 2800);
 }
 
 // ═══ SMOOTH MOMENTUM SCROLL ════════════════════════
