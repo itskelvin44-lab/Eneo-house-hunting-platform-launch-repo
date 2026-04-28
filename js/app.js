@@ -18,6 +18,38 @@ function initSupabase() {
 
 // Initialize on load
 supabaseClient = initSupabase();
+// Check for existing session on page load (handles OAuth redirect back)
+(async function checkExistingSession() {
+  if (!supabaseClient) return;
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (session) {
+    // Ensure public.users row exists for OAuth users
+    const { data: profile } = await supabaseClient
+      .from('users')
+      .select('id')
+      .eq('id', session.user.id)
+      .maybeSingle();
+    if (!profile) {
+      await supabaseClient.from('users').insert({
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.user_metadata?.full_name || '',
+        phone: session.user.user_metadata?.phone || '',
+        account_id: 'usr_' + session.user.id.substring(0, 10)
+      });
+    }
+    // Bypass login screen, go straight to app
+    document.getElementById('login-screen').classList.remove('active');
+    document.getElementById('app-screen').classList.add('active');
+    renderFeed();
+    updateSavedCountBadge();
+    renderAccount();
+    loadSavedFromDB();
+    loadHistoryFromDB();
+    loadAlertsFromDB();
+  }
+})();
+
 
 // ═══ DATA LAYER ═══════════════════════════════════
 
@@ -298,9 +330,20 @@ async function createBooking(propertyId) {
     return { data: { id: Date.now() }, error: null };
   }
   const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) return { data: null, error: 'Not authenticated' };
+
+  // Fetch tenant's own profile (RLS allows reading own row)
+  const { data: profile } = await supabaseClient
+    .from('users')
+    .select('name, phone')
+    .eq('id', user.id)
+    .single();
+
   return await supabaseClient.from('bookings').insert({
     property_id: propertyId,
     tenant_id: user.id,
+    tenant_name: profile?.name || '',
+    tenant_phone: profile?.phone || '',
     status: 'pending'
   });
 }
@@ -760,7 +803,7 @@ function createPropertyCardHTML(p) {
   const bedLabel = p.beds === 0 ? 'Studio' : p.beds;
   const badgeHTML = p.isNew ? '<span class="badge green">✨ New</span>' : '<span class="badge terra">🔥 Popular</span>';
   const dotsHTML = p.photos.map((_, i) => `<span class="gdot${i === 0 ? ' active' : ''}"></span>`).join('');
-  const photosHTML = p.photos.map(src => `<img src="${src}" alt="">`).join('');
+  const photosHTML = p.photos.map((src, i) => `<img src="${src}" alt="" loading="lazy" ${i === 0 ? '' : 'decoding="async"'}>`).join('');
   return `
     <div class="pcard" data-prop-id="${p.id}" onclick="openDetail(${p.id})">
       <div class="pcard-img">
@@ -805,17 +848,12 @@ async function renderPosting() {
       const propertyIds = listings.map(p => p.id);
       const { data: allBookings } = await supabaseClient
         .from('bookings')
-        .select('id, booked_at, property_id, tenant_id')
+        .select('id, booked_at, property_id, tenant_id, tenant_name, tenant_phone')
         .in('property_id', propertyIds)
         .eq('status', 'pending')
         .order('booked_at', { ascending: false });
 
-      const tenantIds = [...new Set((allBookings || []).map(b => b.tenant_id))];
-      const { data: tenants } = tenantIds.length > 0
-        ? await supabaseClient.from('users').select('id, name, phone').in('id', tenantIds)
-        : { data: [] };
-      const tenantMap = {};
-      (tenants || []).forEach(t => { tenantMap[t.id] = t; });
+
 
       const bookingsByProperty = {};
       (allBookings || []).forEach(b => {
@@ -835,9 +873,9 @@ async function renderPosting() {
         const propBookings = bookingsByProperty[p.id] || [];
 
         const bookingsHTML = propBookings.length > 0 ? propBookings.map(b => {
-          const tenant = tenantMap[b.tenant_id] || {};
-          const tenantName = tenant.name || 'Tenant';
-          const tenantPhone = tenant.phone || '';
+
+          const tenantName = b.tenant_name || 'Tenant';
+          const tenantPhone = b.tenant_phone || '';
           const initials = tenantName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
           const bookedTimeAgo = timeAgo(new Date(b.booked_at).getTime());
           return `
@@ -1370,7 +1408,13 @@ async function submitPost() {
       } catch (e) {
         // Silent — county will be empty
       }
-
+      // Get landlord phone from current user's profile
+      const { data: landlordProfile } = await supabaseClient
+        .from('users')
+        .select('phone')
+        .eq('id', (await supabaseClient.auth.getUser()).data.user.id)
+        .single();
+      const landlordPhone = landlordProfile?.phone || '';
       const propertyData = {
         title,
         description: desc,
@@ -1384,7 +1428,8 @@ async function submitPost() {
         county,
         photos: photoUrls,
         status: 'active',
-        landlord_id: (await supabaseClient.auth.getUser()).data.user.id
+        landlord_id: (await supabaseClient.auth.getUser()).data.user.id,
+        landlord_phone: landlordPhone
       };
 
       let error;
@@ -1562,30 +1607,43 @@ async function compareSelected() {
 
 // ═══ DETAIL PANEL ══════════════════════════════════
 
-async function openDetail(propId) {
-  let { data: p, error } = await fetchPropertyById(propId);
-  if (error || !p) p = null;
-  if (!p) return;
+// Cache for property details — avoids re-fetching on repeat visits
+const detailCache = {};
 
-  p = {
-    ...p,
-    beds: p.bedrooms ?? p.beds ?? 0,
-    baths: p.baths ?? 1,
-    type: p.property_type ?? p.type ?? 'Apartment',
-    loc: p.location ?? p.loc ?? '',
-    desc: p.description ?? p.desc ?? '',
-    area: p.area ?? 'N/A',
-    isNew: p.isNew ?? false,
-    photos: Array.isArray(p.photos) ? p.photos : (typeof p.photos === 'string' ? JSON.parse(p.photos) : []),
-    price: typeof p.price === 'number' ? `KSh ${p.price.toLocaleString()}` : p.price,
-    landlord: p.landlord ?? { name: 'Landlord', initials: 'LL', rating: 0, totalRatings: 0, isTrusted: false, totalPosted: 0, totalBooked: 0, responseRate: 0, reviews: [] },
-    activity: p.activity ?? { views: 0, saves: 0, bookings: 0 }
-  };
+async function openDetail(propId) {
+  // Check cache first
+  let p;
+  if (detailCache[propId]) {
+    p = detailCache[propId];
+  } else {
+    let { data: fetched, error } = await fetchPropertyById(propId);
+    if (error || !fetched) fetched = null;
+    if (!fetched) return;
+
+    p = {
+      ...fetched,
+      beds: fetched.bedrooms ?? fetched.beds ?? 0,
+      baths: fetched.baths ?? 1,
+      type: fetched.property_type ?? fetched.type ?? 'Apartment',
+      loc: fetched.location ?? fetched.loc ?? '',
+      desc: fetched.description ?? fetched.desc ?? '',
+      area: fetched.area ?? 'N/A',
+      isNew: fetched.isNew ?? false,
+      photos: Array.isArray(fetched.photos) ? fetched.photos : (typeof fetched.photos === 'string' ? JSON.parse(fetched.photos) : []),
+      price: typeof fetched.price === 'number' ? `KSh ${fetched.price.toLocaleString()}` : fetched.price,
+      landlord: fetched.landlord ?? { name: 'Landlord', initials: 'LL', rating: 0, totalRatings: 0, isTrusted: false, totalPosted: 0, totalBooked: 0, responseRate: 0, reviews: [] },
+      activity: fetched.activity ?? { views: 0, saves: 0, bookings: 0 }
+    };
+    detailCache[propId] = p;
+  }
 
   curProp = p;
   booked = false;
-  trackView(propId);
-  incrementViewCount(propId);
+  // Defer non-critical writes — panel opens instantly
+  setTimeout(() => {
+    trackView(propId);
+    incrementViewCount(propId);
+  }, 0);
 
   document.getElementById('dt-title').textContent = p.title;
   document.getElementById('dt-loc').innerHTML = '📍 ' + p.loc;
@@ -1673,8 +1731,11 @@ function lbNav(dir) {
   if (newIndex < 0 || newIndex >= lbPhotos.length) return;
   gallery.scrollBy({ left: dir * gallery.clientWidth, behavior: 'smooth' });
 }
-
 async function renderLandlordCard(p) {
+  // Skip fetch if already rendered for this property
+  if (p._landlordRendered) return;
+  p._landlordRendered = true;
+
   // Fetch real landlord profile
   if (p.landlord_id) {
     const { data: profile } = await supabaseClient.from('users').select('name, phone').eq('id', p.landlord_id).single();
@@ -1684,6 +1745,7 @@ async function renderLandlordCard(p) {
       p.landlord.initials = (profile.name || 'L').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     }
   }
+  // ... rest continues as-is
 
   const ld = p.landlord || {};
   const act = p.activity || {};
@@ -1793,11 +1855,9 @@ async function doBook() {
   }
 
   // Fetch real landlord phone
-  if (curProp.landlord_id) {
-    const { data: landlord } = await supabaseClient.from('users').select('phone').eq('id', curProp.landlord_id).single();
-    if (landlord && landlord.phone) {
-      document.querySelector('.contact-number').textContent = landlord.phone;
-    }
+  // Use landlord_phone stored on the property itself
+  if (curProp.landlord_phone) {
+    document.querySelector('.contact-number').textContent = curProp.landlord_phone;
   }
 
   booked = true;
@@ -2484,23 +2544,30 @@ async function doDeleteAccount() {
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) { closeModal('m-delete-account'); resetDeleteModal(); doLogout(); return; }
 
-  await supabaseClient.from('properties').update({ status: 'removed' }).eq('landlord_id', user.id);
-  await supabaseClient.from('saved_properties').delete().eq('user_id', user.id);
-  await supabaseClient.from('browsing_history').delete().eq('user_id', user.id);
-  await supabaseClient.from('bookings').delete().eq('tenant_id', user.id);
-  await supabaseClient.from('notify_alerts').delete().eq('user_id', user.id);
-  await supabaseClient.from('users').delete().eq('id', user.id);
+  try {
+    await supabaseClient.from('properties').update({ status: 'removed' }).eq('landlord_id', user.id);
+    await supabaseClient.from('saved_properties').delete().eq('user_id', user.id);
+    await supabaseClient.from('browsing_history').delete().eq('user_id', user.id);
+    await supabaseClient.from('bookings').delete().eq('tenant_id', user.id);
+    await supabaseClient.from('notify_alerts').delete().eq('user_id', user.id);
+    await supabaseClient.from('reviews').delete().eq('reviewer_id', user.id);
+    await supabaseClient.from('reviews').delete().eq('landlord_id', user.id);
+    await supabaseClient.from('users').delete().eq('id', user.id);
 
-  closeModal('m-delete-account');
-  resetDeleteModal();
-  setTimeout(async () => {
-    await signOut();
-    document.getElementById('app-screen').classList.remove('active');
-    document.getElementById('login-screen').classList.add('active');
-    savedProps = []; browsingHistory = []; notifyAlerts = [];
-    updateSavedCountBadge();
-    toast('🗑️ Account deleted', 'ok');
-  }, 300);
+    closeModal('m-delete-account');
+    resetDeleteModal();
+    setTimeout(async () => {
+      await signOut();
+      document.getElementById('app-screen').classList.remove('active');
+      document.getElementById('login-screen').classList.add('active');
+      savedProps = []; browsingHistory = []; notifyAlerts = [];
+      updateSavedCountBadge();
+      toast('🗑️ Account deleted', 'ok');
+    }, 300);
+  } catch (err) {
+    toast('Failed to delete account. Please try again.', 'err');
+    console.error('Delete account error:', err);
+  }
 }
 
 // ═══ FORGOT PASSWORD ═══════════════════════════════
@@ -2518,7 +2585,9 @@ async function forgotPassword() {
 async function signInWithGoogle() {
   const { error } = await supabaseClient.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.href }
+    options: {
+      redirectTo: window.location.origin  // redirect back to root, not window.location.href
+    }
   });
   if (error) toast(error.message || 'Google sign-in failed.', 'err');
 }
