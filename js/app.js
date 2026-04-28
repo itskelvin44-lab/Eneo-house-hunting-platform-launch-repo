@@ -1095,7 +1095,7 @@ async function compressImage(file, maxSizeKB = 200) {
       const img = new Image();
       img.onload = function () {
         const megapixels = (img.width * img.height) / 1000000;
-        if (megapixels > 12) return reject(new Error('Image too large. Please use a photo under 12 megapixels.'));
+        if (megapixels > 72) return reject(new Error('Image too large. Please use a photo under 72 megapixels.'));
         const maxDimension = 1600;
         let width = img.width, height = img.height;
         if (width > maxDimension || height > maxDimension) {
@@ -2545,7 +2545,26 @@ async function doDeleteAccount() {
   if (!user) { closeModal('m-delete-account'); resetDeleteModal(); doLogout(); return; }
 
   try {
-    await supabaseClient.from('properties').update({ status: 'removed' }).eq('landlord_id', user.id);
+    // Delete all photos from storage for each property owned
+    const { data: myProps } = await supabaseClient
+      .from('properties')
+      .select('id, photos')
+      .eq('landlord_id', user.id);
+
+    if (myProps && myProps.length) {
+      for (const prop of myProps) {
+        const photos = Array.isArray(prop.photos) ? prop.photos : (typeof prop.photos === 'string' ? JSON.parse(prop.photos || '[]') : []);
+        for (const url of photos) {
+          const path = url.split('/').pop();
+          if (path) {
+            await supabaseClient.storage.from(ENEO_CONFIG.storageBucket).remove(['properties/' + path]);
+          }
+        }
+      }
+    }
+
+    // Delete all properties owned by user (not just set to removed)
+    await supabaseClient.from('properties').delete().eq('landlord_id', user.id);
     await supabaseClient.from('saved_properties').delete().eq('user_id', user.id);
     await supabaseClient.from('browsing_history').delete().eq('user_id', user.id);
     await supabaseClient.from('bookings').delete().eq('tenant_id', user.id);
