@@ -479,6 +479,7 @@ let overlayCount = 0;
 let browsingHistory = [];
 let notifyAlerts = [];
 let nearMeActive = false;
+let phoneRequiredCallback = null;
 let _tt;
 
 // ═══ OVERLAY BODY SCROLL LOCK ════════════════════
@@ -566,7 +567,7 @@ async function doLogin(btn) {
   btn.disabled = true;
 
   const isSignIn = document.getElementById('form-in').style.display !== 'none';
-  
+
   const formId = isSignIn ? 'form-in' : 'form-up';
   const form = document.getElementById(formId);
   if (!form) {
@@ -602,22 +603,8 @@ async function doLogin(btn) {
     result = await signUp(email, password, name, phone);
   }
 
-  if (result.error) {
-    toast('Incorrect email or password. Please try again.', 'err');
-    btn.innerHTML = isSignIn ? 'Sign In →' : 'Create Account →';
-    btn.disabled = false;
-    return;
-  }
-  if (result.error) {
-    toast('Incorrect email or password. Please try again.', 'err');
-    btn.innerHTML = isSignIn ? 'Sign In →' : 'Create Account →';
-    btn.disabled = false;
-    return;
-  }
-
-  // ADD THIS BLOCK RIGHT HERE
-  if (!result.data || !result.data.user) {
-    toast('Login failed. Please try again.', 'err');
+  if (result.error || !result.data || !result.data.user) {
+    toast('Incorrect email or password. If you signed up with Google, use "Continue with Google".', 'err');
     btn.innerHTML = isSignIn ? 'Sign In →' : 'Create Account →';
     btn.disabled = false;
     return;
@@ -1426,6 +1413,19 @@ async function submitPost() {
   if (!photosAdded && !editingId) { toast('📸 Add at least one photo', 'err'); return; }
   if (!locDone) { toast('📍 Add property location first', 'err'); return; }
 
+  // Check phone number before posting
+  const { data: currentUser } = await supabaseClient.auth.getUser();
+  if (currentUser && currentUser.user) {
+    const { data: userProfile } = await supabaseClient.from('users').select('phone').eq('id', currentUser.user.id).single();
+    if (!userProfile?.phone) {
+      openPhoneRequiredModal(() => {
+        // User saved phone, now auto-click submit again
+        document.getElementById('submit-btn').click();
+      });
+      return;
+    }
+  }
+
   const btn = document.getElementById('submit-btn');
   btn.innerHTML = '<span class="spin"></span> &nbsp;' + (editingId ? 'Updating...' : 'Posting...');
   btn.disabled = true;
@@ -2094,7 +2094,41 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ═══ FILTERS ═══════════════════════════════════════
+function openPhoneRequiredModal(callback) {
+  phoneRequiredCallback = callback;
+  document.getElementById('phone-required-input').value = '';
+  openModal('m-phone-required');
+}
 
+async function savePhoneAndContinue() {
+  const phone = document.getElementById('phone-required-input').value.trim();
+  if (!phone) {
+    toast('Please enter a phone number.', 'err');
+    return;
+  }
+
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) {
+    toast('Not authenticated. Please sign in again.', 'err');
+    return;
+  }
+
+  const { error } = await supabaseClient.from('users').update({ phone }).eq('id', user.id);
+
+  if (error) {
+    toast('Failed to save phone. Try again.', 'err');
+    return;
+  }
+
+  closeModal('m-phone-required');
+  toast('📞 Phone number saved!', 'ok');
+  renderAccount();
+
+  if (phoneRequiredCallback) {
+    phoneRequiredCallback(phone);
+    phoneRequiredCallback = null;
+  }
+}
 function openFilterModal() {
   openModal('m-filter');
   updatePriceFill('f', parseInt(document.getElementById('f-range-min')?.value || 0), parseInt(document.getElementById('f-range-max')?.value || 300000));
