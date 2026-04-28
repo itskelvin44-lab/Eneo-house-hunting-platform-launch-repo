@@ -41,7 +41,7 @@ async function fetchProperties(filters = {}) {
       else if (filters.beds === '4+') results = results.filter(p => p.beds >= 4);
       else results = results.filter(p => p.beds === parseInt(filters.beds));
     }
-      if (filters.baths && filters.baths !== 'Any') {
+    if (filters.baths && filters.baths !== 'Any') {
       if (filters.baths === '3+') results = results.filter(p => p.baths >= 3);
       else results = results.filter(p => p.baths === parseFloat(filters.baths));
     }
@@ -267,7 +267,7 @@ async function doDeleteProperty(propId) {
 
   // Get photos to delete from storage
   const { data: prop } = await supabaseClient.from('properties').select('photos').eq('id', propId).single();
-if (prop && prop.photos && prop.photos.length) {
+  if (prop && prop.photos && prop.photos.length) {
     const photos = Array.isArray(prop.photos) ? prop.photos : JSON.parse(prop.photos);
     console.log('🗑️ Deleting ' + photos.length + ' photos from storage...');
     for (const url of photos) {
@@ -563,7 +563,7 @@ function switchNav(m) {
   } else if (m === 'saved') {
     act.innerHTML = `<button class="tbar-icon-btn" onclick="switchNav('feed')" title="Browse">🏠</button>`;
     renderSavedWorkspace();
-    } else if (m === 'history') {
+  } else if (m === 'history') {
     act.innerHTML = `<button class="tbar-icon-btn" onclick="switchNav('feed')" title="Browse">🏠</button>`;
     renderHistory();
   } else if (m === 'bookings') {
@@ -578,7 +578,7 @@ function switchNav(m) {
   if (m === 'saved') renderSavedWorkspace();
   if (m === 'history') renderHistory();
   if (m === 'account') renderAccount();
-    if (m === 'bookings') renderBookings();
+  if (m === 'bookings') renderBookings();
 
   document.getElementById('content-area').scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -587,10 +587,10 @@ function switchNav(m) {
 
 async function renderFeed() {
   const { data: properties, error } = await fetchProperties();
-    // Auto-remove properties with expired pending bookings (3-day rule)
+  // Auto-remove properties with expired pending bookings (3-day rule)
   const now = new Date();
   const seventyTwoHoursAgo = new Date(now.getTime() - 72 * 60 * 60 * 1000).toISOString();
-  
+
   const { data: expiredBookings } = await supabaseClient
     .from('bookings')
     .select('property_id')
@@ -604,7 +604,7 @@ async function renderFeed() {
       .update({ status: 'removed' })
       .in('id', expiredIds)
       .eq('status', 'active');
-    
+
     await supabaseClient
       .from('bookings')
       .update({ status: 'expired' })
@@ -682,7 +682,7 @@ async function renderFeed() {
 
   const propGrid = document.getElementById('prop-grid');
   if (propGrid) propGrid.innerHTML = props.map(p => createPropertyCardHTML(p)).join('');
-    const listingCount = document.getElementById('listing-count');
+  const listingCount = document.getElementById('listing-count');
   if (listingCount) listingCount.textContent = `(${props.length})`;
 
   updateAllSaveToggles();
@@ -794,7 +794,7 @@ async function renderPosting() {
   const { data: myProps } = await fetchMyProperties();
   const listings = (myProps && myProps.length) ? myProps : [];
 
-    // Active
+  // Active
   const ptActive = document.getElementById('pt-active');
   if (ptActive) {
     if (listings.length === 0) {
@@ -840,7 +840,7 @@ async function renderPosting() {
           const tenantPhone = tenant.phone || '';
           const initials = tenantName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
           const bookedTimeAgo = timeAgo(new Date(b.booked_at).getTime());
-                  return `
+          return `
             <div class="booking-row">
               <div class="bk-av">${initials}</div>
               <div class="bk-info">
@@ -939,7 +939,7 @@ async function renderAccount() {
       if (phoneVal) phoneVal.textContent = profile.phone || 'Not set';
       settingRows[1].onclick = () => editProfileField('phone', profile.phone);
     }
-       if (settingRows.length >= 3) {
+    if (settingRows.length >= 3) {
       const emailSmall = settingRows[2].querySelector('.srow-text small');
       const emailVal = settingRows[2].querySelector('.srow-val');
       if (emailSmall) emailSmall.textContent = profile.email || '';
@@ -956,14 +956,14 @@ async function renderAccount() {
     const sbRole = document.querySelector('.sb-user-role');
     if (sbRole) sbRole.textContent = activeCount + ' active listing' + (activeCount !== 1 ? 's' : '');
     const activityRows = document.querySelectorAll('.srow');
-  activityRows.forEach(row => {
-    const strong = row.querySelector('.srow-text strong');
-    if (strong && strong.textContent === 'My Listings') {
-      const small = row.querySelector('.srow-text small');
-      if (small) small.textContent = activeCount + ' active';
-    }
-  });
-       // Fetch real bookings count
+    activityRows.forEach(row => {
+      const strong = row.querySelector('.srow-text strong');
+      if (strong && strong.textContent === 'My Listings') {
+        const small = row.querySelector('.srow-text small');
+        if (small) small.textContent = activeCount + ' active';
+      }
+    });
+    // Fetch real bookings count
     const { data: { user } } = await supabaseClient.auth.getUser();
     let bookedCount = 0;
     if (user) {
@@ -1001,23 +1001,23 @@ async function changePassword() {
 async function editEmail(currentEmail) {
   const newEmail = prompt('Enter new email address:', currentEmail || '');
   if (!newEmail || newEmail === currentEmail) return;
-  
+
   const { data: { user } } = await supabaseClient.auth.getUser();
-  
+
   // Update email in Supabase Auth (sends confirmation)
   const { error: authError } = await supabaseClient.auth.updateUser({ email: newEmail });
   if (authError) {
     toast(authError.message || 'Failed to update email.', 'err');
     return;
   }
-  
+
   // Also update in public.users
   const { error: dbError } = await supabaseClient.from('users').update({ email: newEmail }).eq('id', user.id);
   if (dbError) {
     toast('Updated in auth but failed to update profile.', 'err');
     return;
   }
-  
+
   toast('📧 Confirmation link sent to ' + newEmail + '. Click it to verify.', 'ok');
   renderAccount();
 }
@@ -1058,7 +1058,7 @@ async function compressImage(file, maxSizeKB = 200) {
       img.onload = function () {
         const megapixels = (img.width * img.height) / 1000000;
         if (megapixels > 12) return reject(new Error('Image too large. Please use a photo under 12 megapixels.'));
-        const maxDimension = 1200;
+        const maxDimension = 1600;
         let width = img.width, height = img.height;
         if (width > maxDimension || height > maxDimension) {
           if (width > height) { height = Math.round((height / width) * maxDimension); width = maxDimension; }
@@ -1071,9 +1071,15 @@ async function compressImage(file, maxSizeKB = 200) {
         canvas.toBlob(blob => {
           if (!blob) return reject(new Error('Compression failed'));
           const compressedFile = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
-          console.log(`📸 Compressed: ${(file.size / 1024).toFixed(0)}KB → ${(compressedFile.size / 1024).toFixed(0)}KB`);
-          resolve(compressedFile);
-        }, 'image/jpeg', 0.7);
+
+          if (file.size <= 1024 * 1024 && file.size <= compressedFile.size) {
+            console.log(`📸 Kept original: ${(file.size / 1024).toFixed(0)}KB (under 1MB, already efficient)`);
+            resolve(file);
+          } else {
+            console.log(`📸 Compressed: ${(file.size / 1024).toFixed(0)}KB → ${(compressedFile.size / 1024).toFixed(0)}KB`);
+            resolve(compressedFile);
+          }
+        }, 'image/jpeg', 0.85);
       };
       img.onerror = () => reject(new Error('Failed to load image'));
       img.src = e.target.result;
@@ -1350,7 +1356,7 @@ async function submitPost() {
           }
         });
       }
-          // Reverse geocode to get county from coordinates
+      // Reverse geocode to get county from coordinates
       let county = '';
       try {
         const res = await fetch(
@@ -1799,7 +1805,7 @@ async function doBook() {
   btn.classList.add('done');
   btn.disabled = false;
   document.getElementById('contact-reveal').classList.add('show');
-    // Show review form after booking
+  // Show review form after booking
 
   toast('✅ Booked! Call the landlord to confirm a time.', 'ok');
 }
@@ -1834,7 +1840,7 @@ async function openReviewModal(propertyId, bookingId) {
       .eq('property_id', propertyId)
       .eq('reviewer_id', user.id)
       .maybeSingle();
-    
+
     if (existing) {
       reviewStars = existing.stars;
       setReviewStar(existing.stars);
@@ -1847,7 +1853,7 @@ async function openReviewModal(propertyId, bookingId) {
 
   document.getElementById('review-form').style.display = '';
   openDetail(parseInt(propertyId));
-  
+
   setTimeout(() => {
     document.getElementById('review-form').scrollIntoView({ behavior: 'smooth' });
   }, 500);
@@ -1855,7 +1861,7 @@ async function openReviewModal(propertyId, bookingId) {
 
 async function submitReviewForm() {
   const propId = ratingPropertyId ? parseInt(ratingPropertyId) : (curProp ? curProp.id : null);
-  
+
   if (!propId) {
     toast('Cannot identify property.', 'err');
     return;
@@ -1885,7 +1891,7 @@ async function submitReviewForm() {
     return;
   }
 
-   
+
   const { error } = await supabaseClient.from('reviews').upsert({
     property_id: propId,
     reviewer_id: user.id,
@@ -1935,7 +1941,7 @@ document.addEventListener('scroll', e => {
 // ═══ LIVE SEARCH ═══════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', () => {
-   const searchInput = document.getElementById('feed-search');
+  const searchInput = document.getElementById('feed-search');
   if (searchInput) {
     let searchTimeout;
     searchInput.addEventListener('input', () => {
@@ -2137,7 +2143,7 @@ async function applyFilters() {
   if (baths && baths !== 'Any') filters.baths = baths;
   if (type && type !== 'Any') filters.type = type;
   if (furnish && furnish !== 'Any') filters.furnish = furnish;
-    // Get selected county from chip
+  // Get selected county from chip
   const countyEl = document.querySelector('#ch-county .county-chip.on');
   if (countyEl) {
     const county = countyEl.getAttribute('onclick')?.match(/pickCounty\(this,'(.+?)'\)/)?.[1];
@@ -2200,7 +2206,7 @@ async function checkNotificationCount() {
 
     if (alert.min_price) query = query.gte('price', alert.min_price);
     if (alert.max_price && alert.max_price < 999999) query = query.lte('price', alert.max_price);
-    
+
     const { count, error } = await query.limit(1);
     if (!error && count > 0) matchCount++;
   }
