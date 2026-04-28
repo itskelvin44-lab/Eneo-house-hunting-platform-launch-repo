@@ -2545,7 +2545,7 @@ async function doDeleteAccount() {
   if (!user) { closeModal('m-delete-account'); resetDeleteModal(); doLogout(); return; }
 
   try {
-    // Delete all photos from storage for each property owned
+    // 1. Delete all photos from storage for each property owned
     const { data: myProps } = await supabaseClient
       .from('properties')
       .select('id, photos')
@@ -2563,26 +2563,33 @@ async function doDeleteAccount() {
       }
     }
 
-    // Delete all properties owned by user (not just set to removed)
-    await supabaseClient.from('properties').delete().eq('landlord_id', user.id);
+    // 2. Delete saved properties & browsing history & reviews
     await supabaseClient.from('saved_properties').delete().eq('user_id', user.id);
     await supabaseClient.from('browsing_history').delete().eq('user_id', user.id);
-    await supabaseClient.from('bookings').delete().eq('tenant_id', user.id);
     await supabaseClient.from('notify_alerts').delete().eq('user_id', user.id);
     await supabaseClient.from('reviews').delete().eq('reviewer_id', user.id);
     await supabaseClient.from('reviews').delete().eq('landlord_id', user.id);
+
+    // 3. Delete bookings made by this user
+    await supabaseClient.from('bookings').delete().eq('tenant_id', user.id);
+
+    // 4. Delete properties (cascades to bookings on those properties)
+    await supabaseClient.from('properties').delete().eq('landlord_id', user.id);
+
+    // 5. Delete user from public.users (must be before auth.users due to FK)
     await supabaseClient.from('users').delete().eq('id', user.id);
+
+    // 6. Sign out (this removes the session, auth.user deletion handled by Supabase)
+    await signOut();
 
     closeModal('m-delete-account');
     resetDeleteModal();
-    setTimeout(async () => {
-      await signOut();
-      document.getElementById('app-screen').classList.remove('active');
-      document.getElementById('login-screen').classList.add('active');
-      savedProps = []; browsingHistory = []; notifyAlerts = [];
-      updateSavedCountBadge();
-      toast('🗑️ Account deleted', 'ok');
-    }, 300);
+    document.getElementById('app-screen').classList.remove('active');
+    document.getElementById('login-screen').classList.add('active');
+    savedProps = []; browsingHistory = []; notifyAlerts = [];
+    updateSavedCountBadge();
+    toast('🗑️ Account permanently deleted', 'ok');
+
   } catch (err) {
     toast('Failed to delete account. Please try again.', 'err');
     console.error('Delete account error:', err);
